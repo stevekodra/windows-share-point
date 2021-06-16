@@ -307,7 +307,7 @@ Resources:
                   - s3:GetObject
                 Resource:
                   - !Sub "arn:aws:s3:::${SPBinaryBucket}/${SPBinaryKey}"
-          PolicyName: aws-quickstart-SPServer
+          PolicyName: voly-SPServer
       Path: /
       ManagedPolicyArns:
         - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AmazonEC2RoleforSSM'
@@ -372,76 +372,7 @@ Resources:
       Handle: !Ref SPServer4WaitConditionHanle
       Timeout: 14400 
 
-  SPServer1:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: !Ref 'WS2019FULLBASE'
-      IamInstanceProfile: !Ref 'SharePointServerProfile'
-      InstanceType: !Ref 'SPServerInstanceType'
-      SubnetId: !Ref 'Subnet1ID'
-      Tags:
-        - Key: Name
-          Value: !Sub "${SPServerNetBIOSNamePrefix}1"
-      BlockDeviceMappings:
-        - DeviceName: /dev/sda1
-          Ebs:
-            VolumeSize: '80'
-            VolumeType: gp2
-        - DeviceName: /dev/xvdd
-          Ebs:
-            VolumeSize: '100'
-            VolumeType: gp2
-      SecurityGroupIds:
-        - !Ref SharePointSG
-        - !Ref ADMemberSecurityGroup
-        - !Ref SQLServerAccessSecurityGroup
-      KeyName: !Ref 'KeyPairName'
-      UserData:
-        Fn::Base64: !Sub |
-          <script>
-          cfn-init.exe -v -c config -s ${AWS::StackId} -r SPServer1 --region ${AWS::Region}
-          </script>
-    Metadata:
-      AWS::CloudFormation::Authentication:
-        S3AccessCreds:
-          type: S3
-          roleName: !Ref SharePointServerRole
-      AWS::CloudFormation::Init:
-        configSets:
-          config:
-            - setup
-            - downloadBinaries
-        setup:
-          files:
-            "c:\\cfn\\cfn-hup.conf":
-              content: !Sub |
-                [main]
-                stack=${AWS::StackName}
-                region=${AWS::Region}
-            "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf":
-              content: !Sub |
-                [cfn-auto-reloader-hook]
-                triggers=post.update
-                path=Resources.SPServer1.Metadata.AWS::CloudFormation::Init
-                action=cfn-init.exe -v -c config -s ${AWS::StackId} -r SPServer1 --region ${AWS::Region}
-          services:
-            windows:
-              cfn-hup:
-                enabled: true
-                ensureRunning: true
-                files:
-                  - "c:\\cfn\\cfn-hup.conf"
-                  - "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"
-          commands:
-            1-create-reg-key:
-              command: powershell.exe -command New-Item -Path HKLM:\SOFTWARE\Amazon\ -Name QuickStart -ErrorAction Continue
-            2-set-wait-url:
-              command: !Sub powershell.exe -command "Set-ItemProperty -Path HKLM:\\SOFTWARE\\Amazon\\QuickStart -Name SignalUrl -Value '${SPServer1WaitConditionHanle}' -ErrorAction Continue"
-        downloadBinaries:
-          files:
-            "C:\\config\\sources\\installer.zip":
-              source: !Sub https://${SPBinaryBucket}.s3.${SPBinaryBucketRegion}.${AWS::URLSuffix}/${SPBinaryKey}
-              authentication: S3AccessCreds
+f
 
   SPServer2:
     Type: AWS::EC2::Instance
@@ -2668,21 +2599,21 @@ Resources:
   ADAdminSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub '/aws-quickstart-sharepoint/${AWS::StackName}/ADAdmin'
+      Name: !Sub '/voly-sharepoint/${AWS::StackName}/ADAdmin'
       Description: Account with permissions to act on Active Directory
       SecretString: !Sub '{"username":"${DomainNetBIOSName}\\${ADAdminUserName}","password":"${ADAdminPassword}"}'
 
   SQLAdminSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub '/aws-quickstart-sharepoint/${AWS::StackName}/SQLAdmin'
+      Name: !Sub '/voly-sharepoint/${AWS::StackName}/SQLAdmin'
       Description: Account with permissions to act on SQL Server.
       SecretString: !Sub '{"username":"${DomainNetBIOSName}\\${SQLAdminUserName}","password":"${SQLAdminPassword}"}'
 
   SPSetupAccount:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub '/aws-quickstart-sharepoint/${AWS::StackName}/SPSetup'
+      Name: !Sub '/voly-sharepoint/${AWS::StackName}/SPSetup'
       Description: Account used to install SharePoint in the SharePoint on AWS Quick Start.
       GenerateSecretString:
         SecretStringTemplate:
@@ -2696,7 +2627,7 @@ Resources:
   SPFarmAccount:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub '/aws-quickstart-sharepoint/${AWS::StackName}/SPFarm'
+      Name: !Sub '/voly-sharepoint/${AWS::StackName}/SPFarm'
       Description: Account used as primary SharePoint farm account in the SharePoint on AWS Quick Start.
       GenerateSecretString:
         SecretStringTemplate:
@@ -2710,7 +2641,7 @@ Resources:
   SPWebAppAccount:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub '/aws-quickstart-sharepoint/${AWS::StackName}/SPWebApp'
+      Name: !Sub '/voly-sharepoint/${AWS::StackName}/SPWebApp'
       Description: Account used as primary SharePoint web app service account in the SharePoint on AWS Quick Start.
       GenerateSecretString:
         SecretStringTemplate: 
@@ -2724,7 +2655,7 @@ Resources:
   SPSvcAppAccount:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub '/aws-quickstart-sharepoint/${AWS::StackName}/SPSvcApp'
+      Name: !Sub '/voly-sharepoint/${AWS::StackName}/SPSvcApp'
       Description: Account used as primary SharePoint service app service account in the SharePoint on AWS Quick Start.
       GenerateSecretString:
         SecretStringTemplate:
@@ -2738,7 +2669,7 @@ Resources:
   SPCrawlAccount:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub '/aws-quickstart-sharepoint/${AWS::StackName}/SPCrawl'
+      Name: !Sub '/voly-sharepoint/${AWS::StackName}/SPCrawl'
       Description: Account used as primary SharePoint search crawl account in the SharePoint on AWS Quick Start.
       GenerateSecretString:
         SecretStringTemplate: 
@@ -2752,7 +2683,7 @@ Resources:
   SPUPSyncAccount:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub '/aws-quickstart-sharepoint/${AWS::StackName}/SPUPSync'
+      Name: !Sub '/voly-sharepoint/${AWS::StackName}/SPUPSync'
       Description: Account used as primary SharePoint user profile sync account in the SharePoint on AWS Quick Start.
       GenerateSecretString:
         SecretStringTemplate:
@@ -2766,7 +2697,7 @@ Resources:
   SPSuperUserAccount:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub '/aws-quickstart-sharepoint/${AWS::StackName}/SPSuperUser'
+      Name: !Sub '/voly-sharepoint/${AWS::StackName}/SPSuperUser'
       Description: Account used as primary SharePoint super user account in the SharePoint on AWS Quick Start.
       GenerateSecretString:
         SecretStringTemplate:
@@ -2780,7 +2711,7 @@ Resources:
   SPReaderAccount:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub '/aws-quickstart-sharepoint/${AWS::StackName}/SPReader'
+      Name: !Sub '/voly-sharepoint/${AWS::StackName}/SPReader'
       Description: Account used as primary SharePoint super user account in the SharePoint on AWS Quick Start.
       GenerateSecretString:
         SecretStringTemplate: 
@@ -2794,7 +2725,7 @@ Resources:
   SPPassPhrase:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub '/aws-quickstart-sharepoint/${AWS::StackName}/Passphrase'
+      Name: !Sub '/voly-sharepoint/${AWS::StackName}/Passphrase'
       Description: Account used as farm passphrase in the SharePoint on AWS Quick Start.
       GenerateSecretString:
         SecretStringTemplate: '{"username": "passphrase"}'
